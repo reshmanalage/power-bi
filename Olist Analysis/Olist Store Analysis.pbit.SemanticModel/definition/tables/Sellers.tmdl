@@ -1,0 +1,61 @@
+table Sellers
+	lineageTag: 4c23ea31-7d1e-48fa-bc5c-a6c79b86b8b1
+
+	column seller_id
+		dataType: string
+		lineageTag: ea702ea4-19f9-4415-8037-bf1965523e3d
+		summarizeBy: none
+		sourceColumn: seller_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column seller_zip_code_prefix
+		dataType: string
+		lineageTag: 3560f155-8131-4bc9-87c5-6d9dcb51124a
+		summarizeBy: none
+		sourceColumn: seller_zip_code_prefix
+
+		annotation SummarizationSetBy = Automatic
+
+	column seller_city
+		dataType: string
+		lineageTag: ac30f83d-80d4-402d-afba-51ec9600ceb5
+		summarizeBy: none
+		sourceColumn: seller_city
+
+		annotation SummarizationSetBy = Automatic
+
+	column seller_state
+		dataType: string
+		lineageTag: 189159c9-b0f5-433c-a339-de913b23588b
+		summarizeBy: none
+		sourceColumn: seller_state
+
+		annotation SummarizationSetBy = Automatic
+
+	column SellerTier =
+			
+			VAR OrderCount = CALCULATE(DISTINCTCOUNT('Order Items'[order_id]))
+			RETURN IF(OrderCount >= 20, "20+ orders (power sellers)", "1-19 orders")
+		lineageTag: 9777cf1e-97bc-4867-95a0-e29a1808d60a
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Sellers = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\Admin\Downloads\Olist\olist_sellers_dataset.csv"),[Delimiter=",", Columns=4, Encoding=1252, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{
+				        {"seller_id", type text}, {"seller_zip_code_prefix", type text},
+				        {"seller_city", type text}, {"seller_state", type text}}),
+				    #"Removed Duplicates" = Table.Distinct(#"Changed Type", {"seller_id"})
+				in
+				    #"Removed Duplicates"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

@@ -1,0 +1,82 @@
+table Dim_Date
+	lineageTag: e36e7795-8150-4010-86c2-326fad5ea78a
+
+	column Date
+		formatString: General Date
+		lineageTag: 80eaf040-95fb-48be-b2c4-6520596f3f22
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		variation Variation
+			isDefault
+			relationship: 26089d51-72fc-4970-b298-eeee606869ed
+			defaultHierarchy: LocalDateTable_b852c32c-b998-4686-b349-bcbeae42ec1c.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year
+		formatString: 0
+		lineageTag: af000153-9eec-4b92-9786-6f5f61383ffb
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Year]
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthNumber
+		formatString: 0
+		lineageTag: 248c1420-f665-49c5-81ff-c25972206f28
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [MonthNumber]
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthName
+		lineageTag: dd30edf2-5969-4573-ab37-5573781aec73
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [MonthName]
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearMonth
+		lineageTag: d45b6982-7acc-4dca-b611-0499c01e606f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [YearMonth]
+		sortByColumn: YearMonthSort
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		lineageTag: f1edee70-0bde-491f-b086-d098f817ad1d
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Quarter]
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearMonthSort = Dim_Date[Year] * 100 + Dim_Date[MonthNumber]
+		formatString: 0
+		lineageTag: c7d58f9b-7ea7-48cc-a25a-e7f228979410
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Date = calculated
+		mode: import
+		source =
+				
+				ADDCOLUMNS(
+				    CALENDAR(DATE(2016,1,1), DATE(2018,12,31)),
+				    "Year", YEAR([Date]),
+				    "MonthNumber", MONTH([Date]),
+				    "MonthName", FORMAT([Date], "MMMM"),
+				    "YearMonth", FORMAT([Date], "YYYY-MM"),
+				    "Quarter", "Q" & FORMAT([Date], "Q")
+				)
+
+	annotation PBI_Id = eb4be9958ba9446398fbb51c091327b6
+

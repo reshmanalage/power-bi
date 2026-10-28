@@ -1,0 +1,37 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["Customers","Customer Geolocation","Order Items","Order Payments","Order Reviews","Orders","Products","Sellers","Category Translation","Seller Geolocation"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table Customers
+ref table 'Customer Geolocation'
+ref table 'Order Items'
+ref table DateTableTemplate_f1d4b2c7-fdc8-457a-94b0-72c696c2f772
+ref table LocalDateTable_91bc3851-e8a5-49a8-a51c-ae5a603edb95
+ref table 'Order Payments'
+ref table 'Order Reviews'
+ref table LocalDateTable_1178ec16-40bd-4542-ac1e-33edf6b80567
+ref table LocalDateTable_e71fed9c-dca5-4ffb-a22a-c7bfd018b065
+ref table Orders
+ref table LocalDateTable_4648eb26-e84e-4638-9627-9a08e4dedf35
+ref table LocalDateTable_de97974c-bdf2-4278-9c50-286a9b5401c5
+ref table LocalDateTable_77405517-55ce-437b-baa0-c0c286331d2c
+ref table LocalDateTable_9f588698-e88f-4c29-bce4-1df2553a1585
+ref table LocalDateTable_bec92f0a-2597-4d47-8a91-e1fd078e7f97
+ref table Products
+ref table Sellers
+ref table Dim_Date
+ref table LocalDateTable_b852c32c-b998-4686-b349-bcbeae42ec1c
+ref table 'Seller Geolocation'
+
+ref cultureInfo en-US
+

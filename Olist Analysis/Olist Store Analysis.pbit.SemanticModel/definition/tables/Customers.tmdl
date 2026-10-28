@@ -1,0 +1,62 @@
+table Customers
+	lineageTag: c340820e-8008-429b-9c44-9cc955ceaf65
+
+	column customer_id
+		dataType: string
+		lineageTag: 67229611-75df-490b-b9fe-48c033730372
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_unique_id
+		dataType: string
+		lineageTag: 7405cd07-9b13-4bf3-9029-bf8c234e2714
+		summarizeBy: none
+		sourceColumn: customer_unique_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_zip_code_prefix
+		dataType: string
+		lineageTag: 72cc8f74-6ca8-4753-a77f-685fe22e76ac
+		summarizeBy: none
+		sourceColumn: customer_zip_code_prefix
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_city
+		dataType: string
+		lineageTag: c303d7af-795b-4fff-a77c-13d4554e692a
+		summarizeBy: none
+		sourceColumn: customer_city
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_state
+		dataType: string
+		lineageTag: aadf892d-ca49-43b6-b5a7-45edc1315974
+		summarizeBy: none
+		sourceColumn: customer_state
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Customers = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\Admin\Downloads\Olist\olist_customers_dataset.csv"),[Delimiter=",", Columns=5, Encoding=1252, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{
+				        {"customer_id", type text}, {"customer_unique_id", type text},
+				        {"customer_zip_code_prefix", type text}, {"customer_city", type text},
+				        {"customer_state", type text}}),
+				    #"Trimmed Text" = Table.TransformColumns(#"Changed Type",{{"customer_city", Text.Trim}, {"customer_state", Text.Trim}}),
+				    #"Removed Duplicates" = Table.Distinct(#"Trimmed Text", {"customer_id"})
+				in
+				    #"Removed Duplicates"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

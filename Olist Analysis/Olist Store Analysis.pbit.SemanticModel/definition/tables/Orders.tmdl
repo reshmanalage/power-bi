@@ -1,0 +1,357 @@
+table Orders
+	lineageTag: 65aee7ba-47d4-45e6-aca9-234d36cc180a
+
+	measure 'Total Revenue' = SUM('Order Items'[price])
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: 23f4ebfc-2b23-402f-9b77-4b5b068d1bd5
+
+	measure 'Total Freight' = SUM('Order Items'[freight_value])
+		lineageTag: 02edb46c-3558-4930-9334-bd05d0a8b630
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Orders' = DISTINCTCOUNT(Orders[order_id])
+		formatString: 0
+		lineageTag: 0a11ffe4-7a4d-4ec9-9517-b853cd1eab0f
+
+	measure 'Total Customers' = DISTINCTCOUNT(Customers[customer_unique_id])
+		formatString: 0
+		lineageTag: e3bd26b2-d258-4776-a1a5-cace22e49cc1
+
+	measure 'Total Sellers' = DISTINCTCOUNT(Sellers[seller_id])
+		formatString: 0
+		lineageTag: ccb3101f-920d-4ebc-9cd5-595efa12cca6
+
+	measure 'Avg Order Value' = DIVIDE([Total Revenue], [Total Orders])
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: e6f0e593-272b-40a2-9e7a-820533d25cd9
+
+	measure 'Freight % of Price (Avg per Item)' =
+			
+			AVERAGEX(
+			    'Order Items',
+			    DIVIDE('Order Items'[freight_value], 'Order Items'[price])
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: dee67d6e-510d-485a-a5ad-b05d24127234
+
+	measure 'Delivered Rate' =
+			
+			DIVIDE(
+			    CALCULATE(DISTINCTCOUNT(Orders[order_id]), Orders[order_status] = "Delivered"),
+			    [Total Orders]
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: af26d255-f73e-4ca6-845c-9b2fcc2d87a7
+
+	measure 'Cancellation Rate' =
+			
+			DIVIDE(
+			    CALCULATE(DISTINCTCOUNT(Orders[order_id]), Orders[order_status] = "Canceled"),
+			    [Total Orders]
+			)
+		lineageTag: 3f74066d-fcc9-416e-aa36-8ea240d2354b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Avg Delivery Days' =
+			
+			AVERAGEX(
+			    FILTER(Orders, NOT ISBLANK(Orders[order_delivered_customer_date])),
+			    DATEDIFF(Orders[order_purchase_timestamp], Orders[order_delivered_customer_date], DAY)
+			)
+		lineageTag: ec08d828-c23e-4000-bce5-a3d3dfeac10b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Late Delivery Rate' =
+			
+			VAR DeliveredOrders = FILTER(Orders, NOT ISBLANK(Orders[order_delivered_customer_date]))
+			VAR LateOrders = FILTER(DeliveredOrders, Orders[order_delivered_customer_date] > Orders[order_estimated_delivery_date])
+			RETURN DIVIDE(COUNTROWS(LateOrders), COUNTROWS(DeliveredOrders))
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 7d96fc40-2a49-4490-91f4-ee789795886f
+
+	measure 'Avg Review Score' = AVERAGE('Order Reviews'[review_score])
+		formatString: 0.0
+		lineageTag: 94b81b68-dc53-410a-8478-25161a1500ec
+
+	measure 'Repeat Purchase Rate (Naive, Inflated)' =
+			
+			VAR CustomerOrderCounts =
+			    ADDCOLUMNS(
+			        SUMMARIZE(Orders, Customers[customer_unique_id]),
+			        "OrderCount", CALCULATE(DISTINCTCOUNT(Orders[order_id]))
+			    )
+			VAR RepeatCustomers = COUNTROWS(FILTER(CustomerOrderCounts, [OrderCount] > 1))
+			RETURN DIVIDE(RepeatCustomers, COUNTROWS(CustomerOrderCounts))
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 33fcbcdc-1c31-4a4c-a483-20f759f3c949
+
+	measure 'Repeat Purchase Rate (Corrected)' =
+			
+			VAR CustomerDayCounts =
+			    ADDCOLUMNS(
+			        SUMMARIZE(Orders, Customers[customer_unique_id]),
+			        "DistinctDays", CALCULATE(DISTINCTCOUNT(Orders[OrderDate]))
+			    )
+			VAR RepeatCustomers = COUNTROWS(FILTER(CustomerDayCounts, [DistinctDays] > 1))
+			RETURN DIVIDE(RepeatCustomers, COUNTROWS(CustomerDayCounts))
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: bdc8c1d2-0490-4ed6-9c53-4d50773383d5
+
+	measure 'Total Products' = DISTINCTCOUNT(Products[product_id])
+		formatString: 0
+		lineageTag: 8c6884f4-a2d8-4d35-b09a-4d117cb29c97
+
+	measure 'Pct Same-Day Gaps' =
+			
+			VAR NonFirstOrders = FILTER(Orders, NOT ISBLANK(Orders[DaysSincePreviousOrder]))
+			VAR SameDayOrders = FILTER(NonFirstOrders, Orders[DaysSincePreviousOrder] = 0)
+			RETURN DIVIDE(COUNTROWS(SameDayOrders), COUNTROWS(NonFirstOrders))
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 60e61319-dbe7-473e-abbe-8748b55debe9
+
+	column order_id
+		dataType: string
+		lineageTag: 066afb29-cd00-4453-8d6b-cdc939df2eed
+		summarizeBy: none
+		sourceColumn: order_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		lineageTag: 583cec69-d3cc-4c8e-ad2c-619c9dc4ffa2
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_status
+		dataType: string
+		lineageTag: 8eee5c31-1fe3-412e-8282-781746e640e0
+		summarizeBy: none
+		sourceColumn: order_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_purchase_timestamp
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: ab1f65f5-177e-4cf9-bfec-9258befafac2
+		summarizeBy: none
+		sourceColumn: order_purchase_timestamp
+
+		variation Variation
+			isDefault
+			relationship: 9810e3ce-2979-4851-b358-5e575b29c367
+			defaultHierarchy: LocalDateTable_4648eb26-e84e-4638-9627-9a08e4dedf35.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_approved_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 73191d99-6cd0-4092-b49b-b63bb578612f
+		summarizeBy: none
+		sourceColumn: order_approved_at
+
+		variation Variation
+			isDefault
+			relationship: db6f4d4c-e0af-4ea8-a939-a394c659856d
+			defaultHierarchy: LocalDateTable_de97974c-bdf2-4278-9c50-286a9b5401c5.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_delivered_carrier_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 69691c99-3c7a-4bee-b10c-e5d78748bf13
+		summarizeBy: none
+		sourceColumn: order_delivered_carrier_date
+
+		variation Variation
+			isDefault
+			relationship: 1626c916-58fa-41e4-9904-918a7bf711a7
+			defaultHierarchy: LocalDateTable_77405517-55ce-437b-baa0-c0c286331d2c.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_delivered_customer_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 6ca8dd34-169b-4e39-8543-89cb77b59767
+		summarizeBy: none
+		sourceColumn: order_delivered_customer_date
+
+		variation Variation
+			isDefault
+			relationship: 09292b47-494d-448a-a51d-3d2c93b3ce18
+			defaultHierarchy: LocalDateTable_9f588698-e88f-4c29-bce4-1df2553a1585.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_estimated_delivery_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 9847121e-9f07-4638-813f-b4f59c221ff5
+		summarizeBy: none
+		sourceColumn: order_estimated_delivery_date
+
+		variation Variation
+			isDefault
+			relationship: 1373db27-9356-4dbb-9fab-c50862d02313
+			defaultHierarchy: LocalDateTable_bec92f0a-2597-4d47-8a91-e1fd078e7f97.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column OrderDate
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 2ba6a721-0628-411b-b862-7b6ed82fed00
+		summarizeBy: none
+		sourceColumn: OrderDate
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column DeliveryDaysBucketSort =
+			
+			VAR Days = DATEDIFF(Orders[order_purchase_timestamp], Orders[order_delivered_customer_date], DAY)
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK(Orders[order_delivered_customer_date]), 99,
+			        Days <= 5, 1,
+			        Days <= 10, 2,
+			        Days <= 15, 3,
+			        Days <= 20, 4,
+			        Days <= 30, 5,
+			        6
+			    )
+		formatString: 0
+		lineageTag: 47b502a2-c0a0-4616-9f61-51f0ff4d8b53
+		summarizeBy: sum
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column DeliveryDaysBucket =
+			
+			VAR Days = DATEDIFF(Orders[order_purchase_timestamp], Orders[order_delivered_customer_date], DAY)
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK(Orders[order_delivered_customer_date]), "Not delivered",
+			        Days <= 5, "0-5 days",
+			        Days <= 10, "6-10 days",
+			        Days <= 15, "11-15 days",
+			        Days <= 20, "16-20 days",
+			        Days <= 30, "21-30 days",
+			        "30+ days"
+			    )
+		lineageTag: b73fb5eb-c1cb-4ad3-9fc4-98053e0d78b2
+		summarizeBy: none
+		sortByColumn: DeliveryDaysBucketSort
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column DaysSincePreviousOrder = ```
+			
+			VAR CurrentCustomer = RELATED(Customers[customer_unique_id])
+			VAR CurrentTimestamp = Orders[order_purchase_timestamp]
+			VAR PreviousTimestamp =
+			    CALCULATE(
+			        MAX(Orders[order_purchase_timestamp]),
+			        FILTER(
+			            ALL(Orders),
+			            RELATED(Customers[customer_unique_id]) = CurrentCustomer &&
+			            Orders[order_purchase_timestamp] < CurrentTimestamp
+			        )
+			    )
+			RETURN
+			    IF(ISBLANK(PreviousTimestamp), BLANK(), DATEDIFF(PreviousTimestamp, CurrentTimestamp, DAY))
+			// DaysSincePreviousOrder = 
+			// VAR CurrentCustomer = RELATED(Customers[customer_unique_id])
+			// VAR CurrentDate = Orders[OrderDate]
+			// VAR PreviousDate =
+			//     CALCULATE(
+			//         MAX(Orders[OrderDate]),
+			//         FILTER(
+			//             ALL(Orders),
+			//             RELATED(Customers[customer_unique_id]) = CurrentCustomer &&
+			//             Orders[OrderDate] < CurrentDate
+			//         )
+			//     )
+			// RETURN
+			//     IF(ISBLANK(PreviousDate), BLANK(), DATEDIFF(PreviousDate, CurrentDate, DAY))
+			```
+		formatString: 0
+		lineageTag: 87318092-6276-4855-b908-5ab3cdad5ab1
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column DaysSinceGapBucket =
+			
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(Orders[DaysSincePreviousOrder]), "First order",
+			    Orders[DaysSincePreviousOrder] = 0, "Same day (0 days)",
+			    Orders[DaysSincePreviousOrder] <= 7, "1-7 days",
+			    Orders[DaysSincePreviousOrder] <= 30, "8-30 days",
+			    Orders[DaysSincePreviousOrder] <= 90, "31-90 days",
+			    "90+ days"
+			)
+		lineageTag: 003f7f99-7432-4d66-8ef1-295c25310f5d
+		summarizeBy: none
+		sortByColumn: DaysSinceGapBucketSort
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column DaysSinceGapBucketSort =
+			
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(Orders[DaysSincePreviousOrder]), 99,
+			    Orders[DaysSincePreviousOrder] = 0, 1,
+			    Orders[DaysSincePreviousOrder] <= 7, 2,
+			    Orders[DaysSincePreviousOrder] <= 30, 3,
+			    Orders[DaysSincePreviousOrder] <= 90, 4,
+			    5
+			)
+		formatString: 0
+		lineageTag: 5513dd81-7039-45cf-bb26-667d2cecffc1
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Orders = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\Admin\Downloads\Olist\olist_orders_dataset.csv"),[Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{
+				        {"order_id", type text}, {"customer_id", type text}, {"order_status", type text},
+				        {"order_purchase_timestamp", type datetime}, {"order_approved_at", type datetime},
+				        {"order_delivered_carrier_date", type datetime}, {"order_delivered_customer_date", type datetime},
+				        {"order_estimated_delivery_date", type datetime}}),
+				    #"Capitalized Status" = Table.TransformColumns(#"Changed Type", {{"order_status", Text.Proper}}),
+				    #"Removed Duplicates" = Table.Distinct(#"Capitalized Status", {"order_id"}),
+				    #"Added Custom" = Table.AddColumn(#"Removed Duplicates", "OrderDate", each Date.From([order_purchase_timestamp])),
+				    #"Changed Type1" = Table.TransformColumnTypes(#"Added Custom",{{"order_purchase_timestamp", type datetime}, {"order_approved_at", type datetime}, {"order_delivered_carrier_date", type datetime}, {"OrderDate", type datetime}})
+				in
+				    #"Changed Type1"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

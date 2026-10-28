@@ -1,0 +1,14 @@
+expression 'Category Translation' =
+		let
+		    Source = Csv.Document(File.Contents("C:\Users\Admin\Downloads\Olist\product_category_name_translation.csv"),[Delimiter=",", Columns=2, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+		    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+		    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{
+		        {"product_category_name", type text}, {"product_category_name_english", type text}})
+		in
+		    #"Changed Type"
+	lineageTag: 862db67b-89eb-45b3-9de0-bada4483f62b
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

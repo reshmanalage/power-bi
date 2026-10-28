@@ -1,0 +1,87 @@
+table 'Order Items'
+	lineageTag: bba631e8-dddf-4f71-b8a2-9d444f078af3
+
+	column order_id
+		dataType: string
+		lineageTag: dd532508-1602-4172-b092-b0c7a142e170
+		summarizeBy: none
+		sourceColumn: order_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_item_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 15b54393-bce5-448c-b0cd-ba34bc98bf79
+		summarizeBy: sum
+		sourceColumn: order_item_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_id
+		dataType: string
+		lineageTag: 4622bdea-b410-4c3d-84bc-5ce4be96e4b4
+		summarizeBy: none
+		sourceColumn: product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column seller_id
+		dataType: string
+		lineageTag: 4232c10a-e70f-4ef1-b2d5-8c22f40a9769
+		summarizeBy: none
+		sourceColumn: seller_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column shipping_limit_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 38292678-1f6f-4d5b-b7e9-05824ba87e02
+		summarizeBy: none
+		sourceColumn: shipping_limit_date
+
+		variation Variation
+			isDefault
+			relationship: 27364176-e1e1-49d8-99fc-09575e95d32b
+			defaultHierarchy: LocalDateTable_91bc3851-e8a5-49a8-a51c-ae5a603edb95.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column price
+		dataType: double
+		lineageTag: 19fcf1a5-1189-43ab-ba56-1eb463e1a775
+		summarizeBy: sum
+		sourceColumn: price
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column freight_value
+		dataType: double
+		lineageTag: 773c6e97-2712-4076-a42c-aea89cf4c6e3
+		summarizeBy: sum
+		sourceColumn: freight_value
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'Order Items' = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\Admin\Downloads\Olist\olist_order_items_dataset.csv"),[Delimiter=",", Columns=7, Encoding=1252, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{
+				        {"order_id", type text}, {"order_item_id", Int64.Type}, {"product_id", type text},
+				        {"seller_id", type text}, {"shipping_limit_date", type datetime},
+				        {"price", type number}, {"freight_value", type number}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

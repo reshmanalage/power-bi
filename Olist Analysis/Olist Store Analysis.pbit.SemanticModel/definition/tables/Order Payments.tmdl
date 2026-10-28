@@ -1,0 +1,64 @@
+table 'Order Payments'
+	lineageTag: cf021d10-709e-4241-9c27-e902f8572dd1
+
+	column order_id
+		dataType: string
+		lineageTag: b2bd3a3c-0c70-4a11-b811-569d03514749
+		summarizeBy: none
+		sourceColumn: order_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_sequential
+		dataType: int64
+		formatString: 0
+		lineageTag: a70d52e7-ba6d-4410-a224-98693ef9b179
+		summarizeBy: sum
+		sourceColumn: payment_sequential
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_type
+		dataType: string
+		lineageTag: b19ebc0b-cb7c-4277-b02f-87744b9cfa5a
+		summarizeBy: none
+		sourceColumn: payment_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_installments
+		dataType: int64
+		formatString: 0
+		lineageTag: 7faf0847-4220-4205-8c60-a5ded75b44f1
+		summarizeBy: sum
+		sourceColumn: payment_installments
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_value
+		dataType: double
+		lineageTag: 86a0e485-f322-4b25-b8da-afc05d04839d
+		summarizeBy: sum
+		sourceColumn: payment_value
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'Order Payments' = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\Admin\Downloads\Olist\olist_order_payments_dataset.csv"),[Delimiter=",", Columns=5, Encoding=1252, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{
+				        {"order_id", type text}, {"payment_sequential", Int64.Type}, {"payment_type", type text},
+				        {"payment_installments", Int64.Type}, {"payment_value", type number}}),
+				    #"Capitalized Type" = Table.TransformColumns(#"Changed Type", {{"payment_type", Text.Proper}})
+				in
+				    #"Capitalized Type"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

@@ -1,0 +1,74 @@
+table 'Seller Geolocation'
+	lineageTag: 61c14353-1ae0-4e5d-82e6-3708c1fe5bd7
+
+	column geolocation_zip_code_prefix
+		dataType: string
+		lineageTag: 4e78e18a-1c35-4a14-a902-def7de3707df
+		summarizeBy: none
+		sourceColumn: geolocation_zip_code_prefix
+
+		annotation SummarizationSetBy = Automatic
+
+	column AvgLat
+		dataType: double
+		lineageTag: bbc9557f-605c-4281-85de-6495823df035
+		dataCategory: Latitude
+		summarizeBy: none
+		sourceColumn: AvgLat
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column AvgLng
+		dataType: double
+		lineageTag: 2f0b314e-2e82-42fd-934b-eb9bb726dc07
+		dataCategory: Longitude
+		summarizeBy: none
+		sourceColumn: AvgLng
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column City
+		dataType: string
+		lineageTag: 6de3609c-0f5c-4da1-b248-73bd809ea955
+		summarizeBy: none
+		sourceColumn: City
+
+		annotation SummarizationSetBy = Automatic
+
+	column State
+		dataType: string
+		lineageTag: 6e1ad56b-935e-4e9a-83ba-be446d86cf55
+		summarizeBy: none
+		sourceColumn: State
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Seller Geolocation' = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\Admin\Downloads\Olist\olist_geolocation_dataset.csv"),[Delimiter=",", Columns=5, Encoding=1252, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{
+				        {"geolocation_zip_code_prefix", type text}, {"geolocation_lat", type number},
+				        {"geolocation_lng", type number}, {"geolocation_city", type text}, {"geolocation_state", type text}}),
+				    #"Filtered Outliers" = Table.SelectRows(#"Changed Type", each
+				        [geolocation_lat] <= 5.27 and [geolocation_lat] >= -33.75 and
+				        [geolocation_lng] <= -34.79 and [geolocation_lng] >= -73.99),
+				    #"Grouped Rows" = Table.Group(#"Filtered Outliers", {"geolocation_zip_code_prefix"}, {
+				        {"AvgLat", each List.Average([geolocation_lat]), type number},
+				        {"AvgLng", each List.Average([geolocation_lng]), type number},
+				        {"City", each List.First([geolocation_city]), type text},
+				        {"State", each List.First([geolocation_state]), type text}
+				    })
+				in
+				    #"Grouped Rows"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
